@@ -1,0 +1,6 @@
+#!/bin/sh
+echo "Hallo world"
+
+if [ -n "$RESULT_FILE" ]; then
+    echo '{"hallo_world": "Hallo world"}' > "$RESULT_FILE"
+fi

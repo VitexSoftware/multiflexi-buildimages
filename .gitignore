@@ -1,0 +1,37 @@
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Docker
+*.tar
+
+# Build artifacts (GitHub Actions)
+/dist/
+
+# Local env
+.env
+.env.*
+
+# Deb package build outputs
+*.build
+*.buildinfo
+*.changes
+*.deb
+*.dsc
+*.tar.*
+*.upload
+
+# Debhelper and packaging temps
+Test/**/debian/*.debhelper
+Test/**/debian/*.log
+Test/**/debian/.debhelper/
+Test/**/debian/files
+Test/**/debian/tmp/
+Test/**/debian/multiflexi-halloworld/
+
+# Node/npm (if any in future)
+node_modules/
+

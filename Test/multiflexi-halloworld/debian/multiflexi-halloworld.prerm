@@ -1,0 +1,26 @@
+#!/bin/sh
+# prerm script for multiflexi-halloworld
+set -e
+
+case "$1" in
+  remove)
+    APPLICATION="$(echo "$DPKG_MAINTSCRIPT_PACKAGE" | sed 's/multiflexi-//')"
+    if [ -d "/usr/lib/$APPLICATION/multiflexi" ]; then
+      for file in /usr/lib/$APPLICATION/multiflexi/*.json; do
+        [ -f "$file" ] || continue
+        multiflexi-json-app-remover "$file" || true
+      done
+    fi
+    ;;
+  upgrade|deconfigure)
+    ;;
+  failed-upgrade)
+    ;;
+  *)
+    echo "prerm called with unknown argument \`$1'" >&2
+    exit 1
+    ;;
+ esac
+
+# Automatically added by dh_installdeb
+#DEBHELPER#

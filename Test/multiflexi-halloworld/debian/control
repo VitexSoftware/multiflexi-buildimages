@@ -1,0 +1,15 @@
+Source: multiflexi-halloworld
+Section: utils
+Priority: optional
+Maintainer: Vitex Software <info@vitexsoftware.cz>
+Standards-Version: 4.7.2
+Build-Depends: debhelper-compat (= 13)
+Rules-Requires-Root: no
+
+Package: multiflexi-halloworld
+Architecture: all
+Depends: ${misc:Depends}, multiflexi
+Description: MultiFlexi HalloWorld test tool
+ A minimal test tool for MultiFlexi build images.
+ Installs a simple script and an example MultiFlexi app descriptor.
+

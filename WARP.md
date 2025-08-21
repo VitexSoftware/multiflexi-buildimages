@@ -74,6 +74,9 @@ High-level architecture and structure
   - Optional shared scripts or snippets for common steps (e.g., adding the repo key, apt source list entries).
   - Optional CI workflow to build and publish images on push or tag.
 
+- Test assets
+  - Test/ contains example Debian packaging workflow and a helper tool (multiflexi-halloworld) with README explaining usage. These are illustrative for validating images against real packaging tasks.
+
 Notes for future contributors (actionable, repo-specific)
 - When adding Dockerfiles:
   - Ensure the image adds and trusts the repo.multiflexi.eu APT source (key + source list) and performs an apt update to validate availability.
