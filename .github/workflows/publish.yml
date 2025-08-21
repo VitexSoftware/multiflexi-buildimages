@@ -72,5 +72,5 @@ jobs:
             KEY_URL=${{ env.KEY_URL }}
           tags: |
             ${{ env.IMAGE_NAME }}:latest
-            ghcr.io/VitexSoftware/multiflexi-${{ matrix.variant }}:latest
+            ghcr.io/vitexsoftware/multiflexi-${{ matrix.variant }}:latest
 
