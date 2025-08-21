@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   build-and-push:
@@ -52,6 +53,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -64,4 +72,5 @@ jobs:
             KEY_URL=${{ env.KEY_URL }}
           tags: |
             ${{ env.IMAGE_NAME }}:latest
+            ghcr.io/VitexSoftware/multiflexi-${{ matrix.variant }}:latest
 

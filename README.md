@@ -28,8 +28,10 @@ Build locally
   make publish
 
 Image naming
-- Docker Hub tags: vitexsoftware/multiflexi-<variant>:latest
+- Docker Hub: vitexsoftware/multiflexi-\u003cvariant\u003e:latest
   Example: vitexsoftware/multiflexi-bookworm:latest
+- GitHub Packages (GHCR): ghcr.io/VitexSoftware/multiflexi-\u003cvariant\u003e:latest
+  Example: ghcr.io/VitexSoftware/multiflexi-bookworm:latest
 
 What the images do
 - Add the MultiFlexi APT repository entry and (optionally) configure its signing key.
