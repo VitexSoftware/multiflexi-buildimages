@@ -34,7 +34,7 @@ jobs:
     env:
       IMAGE_NAME: vitexsoftware/multiflexi-${{ matrix.variant }}
       REPO_URL: https://repo.multiflexi.eu
-      KEY_URL: https://repo.multiflexi.eu/pubkey.gpg
+      KEY_URL: https://repo.multiflexi.eu/KEY.gpg
       PLATFORMS: linux/amd64,linux/arm64
     steps:
       - name: Checkout

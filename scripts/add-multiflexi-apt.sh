@@ -5,7 +5,7 @@ set -euo pipefail
 # Usage:
 #   add-multiflexi-apt.sh <distro_codename> <repo_url> [key_url]
 # Example:
-#   add-multiflexi-apt.sh bookworm https://repo.multiflexi.eu https://repo.multiflexi.eu/pubkey.gpg
+#   add-multiflexi-apt.sh bookworm https://repo.multiflexi.eu https://repo.multiflexi.eu/KEY.gpg
 # Notes:
 # - If key_url is omitted, the repo list will be written but left commented to avoid insecure configuration.
 # - This script is intended for use during image build (RUN stage).

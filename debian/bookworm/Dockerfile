@@ -2,7 +2,7 @@
 FROM debian:bookworm-slim
 
 ARG REPO_URL=https://repo.multiflexi.eu
-ARG KEY_URL=https://repo.multiflexi.eu/pubkey.gpg
+ARG KEY_URL=https://repo.multiflexi.eu/KEY.gpg
 
 COPY scripts/add-multiflexi-apt.sh /usr/local/bin/add-multiflexi-apt.sh
 RUN chmod +x /usr/local/bin/add-multiflexi-apt.sh \
