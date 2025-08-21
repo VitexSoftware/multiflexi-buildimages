@@ -8,8 +8,11 @@ Variants
 
 Prerequisites
 - Docker (for local builds). For multi-arch builds, enable Buildx: docker buildx create --use
+- Optional: hadolint for linting Dockerfiles (https://github.com/hadolint/hadolint)
 
 Build locally
+- Lint Dockerfiles:
+  make lint
 - Build all variants:
   make
 - Build a single variant (examples):

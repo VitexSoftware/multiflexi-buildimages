@@ -71,11 +71,17 @@ publish: buildx
 	  --push \
 	  .; done
 
+# Lint Dockerfiles with hadolint
+.PHONY: lint
+lint:
+	@command -v hadolint >/dev/null 2>&1 || { echo "hadolint not found. Install from https://github.com/hadolint/hadolint/releases or your package manager." >&2; exit 127; }
+	@find . -maxdepth 3 -type f -name 'Dockerfile' -o -name 'Dockerfile*' -print0 | xargs -0 -r hadolint
+
 # Clean
 .PHONY: clean reset
 clean:
-	-@for v in $(ALL_VARIANTS); do docker rmi -f $(NAMESPACE)/multiflexi-$$v:latest 2>/dev/null || true; done
-	-@docker image prune -f 2>/dev/null || true
+	-@for v in $(ALL_VARIANTS); do docker rmi -f $(NAMESPACE)/multiflexi-$$v:latest 2> /dev/null || true; done
+	-@docker image prune -f 2> /dev/null || true
 
 reset: clean all
 

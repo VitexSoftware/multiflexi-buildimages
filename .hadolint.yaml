@@ -1,0 +1,4 @@
+ignored: DL3008 # Pin versions in apt-get install is often impractical for base images here
+ignored: DL3009 # Use ADD instead of COPY is not applicable; we prefer COPY here
+ignored: DL3015 # Using latest for base images is acceptable for rolling variants
+
