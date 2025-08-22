@@ -57,3 +57,31 @@ GitHub Actions (CI)
 Quick validation
 - Verify the APT repo is present inside a built image:
   docker run --rm vitexsoftware/multiflexi-bookworm:latest bash -lc "grep -R 'repo.multiflexi.eu' /etc/apt/sources.list /etc/apt/sources.list.d || (echo 'Repo not found' >&2; exit 1)"
+
+Jenkins pipelines
+- Build pipeline: Jenkinsfile (builds and archives .deb artifacts for Debian/Ubuntu variants)
+- Publish pipeline: Jenkinsfile.publish (runs after build, fetches artifacts, and publishes to https://repo.multiflexi.eu)
+
+Publish pipeline setup (Jenkins)
+1) Create credentials
+   - Kind: SSH Username with private key
+   - ID: repo-multiflexi-ssh
+   - Username: user with access to the repo server (e.g., repo)
+   - Private key: key authorized on repo.multiflexi.eu
+2) Create a multibranch or pipeline job pointing to this repo and select Jenkinsfile.publish
+3) Configure upstream trigger
+   - In Jenkins UI for the publish job, enable "Build when another project is built" and set the upstream job name (the build job using Jenkinsfile)
+   - Alternatively, start manually by providing parameters
+4) Parameters (defaults can be adjusted in Jenkinsfile.publish)
+   - UPSTREAM_JOB: name of the build job to pull artifacts from
+   - UPSTREAM_BUILD: lastSuccessfulBuild or a specific build number
+   - REMOTE_SSH: repo@repo.multiflexi.eu
+   - REMOTE_REPO_DIR: repository path on the server (e.g., /srv/repo)
+   - COMPONENT: main or paid
+   - DEB_DIST: optional override of distro codename (otherwise inferred from filename like ~bookworm)
+5) Remote host requirements
+   - reprepro installed and initialized in REMOTE_REPO_DIR
+   - SSH access for the configured user, with write permissions to REMOTE_REPO_DIR
+
+Helper scripts
+- scripts/publish-to-reprepro.sh: copies .deb artifacts via scp and runs reprepro includedeb per codename on the remote host. It infers distro codenames from filenames (..~<codename>.deb) or control metadata, unless DEB_DIST is provided.

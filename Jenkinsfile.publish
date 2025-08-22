@@ -1,0 +1,81 @@
+#!groovy
+
+// Jenkinsfile.publish: Runs after the build pipeline, fetches artifacts, and publishes them to repo.multiflexi.eu
+// Requirements on Jenkins:
+// - Plugins: Copy Artifact, Credentials Binding, SSH Agent, ANSI Color
+// - Credentials: 'repo-multiflexi-ssh' (SSH private key for repo host)
+// - Upstream job name set via UPSTREAM_JOB parameter, or configure this job with 'Build is parameterized' and default
+// - Environment: reprepro installed on remote repo host; Jenkins agent with scp/ssh available
+
+properties([
+  parameters([
+    string(name: 'UPSTREAM_JOB', defaultValue: 'multiflexi-buildimages', description: 'Name of upstream build job to copy artifacts from'),
+    string(name: 'UPSTREAM_BUILD', defaultValue: 'lastSuccessfulBuild', description: 'Specific build number or lastSuccessfulBuild'),
+    string(name: 'REMOTE_SSH', defaultValue: 'repo@repo.multiflexi.eu', description: 'SSH user@host for the repository server'),
+    string(name: 'REMOTE_REPO_DIR', defaultValue: '/srv/repo', description: 'Absolute path to reprepro repository base on remote host'),
+    choice(name: 'COMPONENT', choices: ['main','paid'], description: 'Repository component used when publishing'),
+    string(name: 'DEB_DIST', defaultValue: '', description: 'Override distribution codename (optional)'),
+  ]),
+  // Allow copying artifacts from the configured upstream job
+  copyArtifactPermission('*')
+])
+
+node {
+  ansiColor('xterm') {
+    stage('Checkout self') {
+      checkout scm
+    }
+
+    dir('publish-workspace') {
+      deleteDir()
+
+      stage('Fetch artifacts from upstream') {
+        // Copy all .deb files archived by upstream across all matrix branches
+        step([$class: 'CopyArtifact',
+          projectName: params.UPSTREAM_JOB,
+          selector: params.UPSTREAM_BUILD == 'lastSuccessfulBuild' ? lastSuccessful() : specific(params.UPSTREAM_BUILD),
+          filter: '**/*.deb',
+          fingerprintArtifacts: true,
+          flatten: true
+        ])
+
+        sh 'ls -l || true'
+        sh 'echo "Found $(ls -1 *.deb 2>/dev/null | wc -l) debs"'
+      }
+
+      stage('Publish to repo.multiflexi.eu') {
+        // Use SSH Agent credentials
+        sshagent(credentials: ['repo-multiflexi-ssh']) {
+          withEnv(["DEB_DIST=${params.DEB_DIST}"]) {
+            sh '''
+              set -euxo pipefail
+              # Ensure helper script is executable
+              chmod +x "$WORKSPACE/scripts/publish-to-reprepro.sh"
+              # If no debs found, fail clearly
+              shopt -s nullglob
+              debs=( *.deb )
+              if [ ${#debs[@]} -eq 0 ]; then
+                echo "No .deb artifacts found to publish" >&2
+                exit 2
+              fi
+              "$WORKSPACE/scripts/publish-to-reprepro.sh" "${REMOTE_SSH}" "${REMOTE_REPO_DIR}" "${COMPONENT}" "${debs[@]}"
+            '''
+          }
+        }
+      }
+    }
+  }
+}
+
+if (!currentBuild.result || currentBuild.result == 'SUCCESS') {
+    build job: 'MultiFlexi-publish',
+      wait: false,
+      parameters: [
+        string(name: 'UPSTREAM_JOB', value: env.JOB_NAME),
+        string(name: 'UPSTREAM_BUILD', value: env.BUILD_NUMBER),
+        string(name: 'REMOTE_SSH', value: 'multirepo@repo.multiflexi.eu'),
+        string(name: 'REMOTE_REPO_DIR', value: '/srv/repo'),
+        string(name: 'COMPONENT', value: 'main'),
+        string(name: 'DEB_DIST', value: '')
+      ]
+}
