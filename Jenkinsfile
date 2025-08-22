@@ -84,11 +84,11 @@ distributions.each { distro ->
                         sh '''
                             set -e
                             if [ -f debian/files ]; then
-                              while read -r f _; do
-                                [ -n "$f" ] || continue
-                                rm -f "dist/debian/$f" || true
-                                rm -f "../$f" || true
-                                rm -f "$WORKSPACE/$f" || true
+                              while read -r file _; do
+                                [ -n "$file" ] || continue
+                                rm -f "dist/debian/$file" || true
+                                rm -f "../$file" || true
+                                rm -f "$WORKSPACE/$file" || true
                               done < debian/files
                             fi
                         '''
