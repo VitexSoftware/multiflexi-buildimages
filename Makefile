@@ -61,10 +61,18 @@ buildx-%: %
 push:
 	for v in $(ALL_VARIANTS); do docker push $(NAMESPACE)/multiflexi-$$v:latest; done
 
-publish: buildx
-	for v in $(ALL_VARIANTS); do docker buildx build \
+publish:
+	for v in $(DEBIAN_VARIANTS); do docker buildx build \
 	  --platform $(PLATFORMS) \
-	  -f $(if $(findstring $$v, $(DEBIAN_VARIANTS)),debian/$$v/Dockerfile,ubuntu/$$v/Dockerfile) \
+	  -f debian/$$v/Dockerfile \
+	  --build-arg REPO_URL=$(REPO_URL) \
+	  --build-arg KEY_URL=$(KEY_URL) \
+	  -t $(NAMESPACE)/multiflexi-$$v:latest \
+	  --push \
+	  .; done
+	for v in $(UBUNTU_VARIANTS); do docker buildx build \
+	  --platform $(PLATFORMS) \
+	  -f ubuntu/$$v/Dockerfile \
 	  --build-arg REPO_URL=$(REPO_URL) \
 	  --build-arg KEY_URL=$(KEY_URL) \
 	  -t $(NAMESPACE)/multiflexi-$$v:latest \
