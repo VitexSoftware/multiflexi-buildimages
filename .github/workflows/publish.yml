@@ -47,6 +47,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Preflight build (amd64, load)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          load: true
+          push: false
+          build-args: |
+            REPO_URL=${{ env.REPO_URL }}
+            KEY_URL=${{ env.KEY_URL }}
+          tags: ${{ env.IMAGE_NAME }}:preflight
+
+      - name: Preflight test: php-vitexsoftware-ease-core-dev
+        run: |
+          docker run --rm "${{ env.IMAGE_NAME }}:preflight" bash -lc "apt-get update && apt-get install -y php-vitexsoftware-ease-core-dev && phpunit --bootstrap /usr/share/php/EaseCore/Test/Bootstrap.php --configuration /usr/share/php/EaseCore/Test/phpunit.xml"
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
