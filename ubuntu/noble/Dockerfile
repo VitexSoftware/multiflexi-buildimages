@@ -33,7 +33,8 @@ RUN chmod +x /usr/local/bin/add-multiflexi-apt.sh \
     && (id -u 222 >/dev/null 2>/dev/null || useradd -m -u 222 -g 222 -s /bin/bash -G sudo jenkins) \
     && echo 'jenkins ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/jenkins \
     && chmod 0440 /etc/sudoers.d/jenkins \
-    && rm -rf /var/lib/apt/lists*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists* /var/cache/apt/archives/*
 
 CMD ["bash"]
 
