@@ -19,7 +19,7 @@ RUN chmod +x /usr/local/bin/add-multiflexi-apt.sh \
 && apt-get install -y --no-install-recommends \
        build-essential devscripts pbuilder sudo aptitude fakeroot git \
        php php-intl php-xml php-mbstring phpunit composer \
-       gettext locales locales-all \
+       gettext locales locales-all libc-bin \
        exim4 mailutils unzip lsb-release procps \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
     && echo "cs_CZ.UTF-8 UTF-8" >> /etc/locale.gen \
