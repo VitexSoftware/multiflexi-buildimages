@@ -1,114 +1,53 @@
 #!groovy
-
+String[] architectures = ['amd64', 'armhf', 'aarch64']
 String[] distributions = ['debian:bookworm', 'debian:trixie', 'debian:forky', 'ubuntu:jammy', 'ubuntu:noble']
 
 String vendor = 'vitexsoftware'
-String imagePrefix = 'multiflexi-'
-//String distroFamily = ''
+String distribution = ''
+String architecture = ''
+String dockerfile = ''
+String buildArgs = ''
+String distroFamily = ''
+String distroCodename = ''
 
-properties([
-    copyArtifactPermission('*')
-])
-node() {
-    ansiColor('xterm') {
-        stage('SCM Checkout') {
-            checkout scm
-        }
-    }
-}
 
-def branches = [:]
-distributions.each { distro ->
-    branches[distro] = {
-        def distroName = distro
-        println  "Dist:" + distroName
+architectures.each {
+    architecture = it
+    distributions.each {
+        distribution = it
+        dockerfile =  distribution + '/Dockerfile'
+        buildArgs = ' --platform linux/' + architecture +
+/*        ' -t ' + vendor + '/' + distribution + */
+        ' -f ' + dockerfile + ' ' + distribution
 
-        def dist = distroName.split(':')
-        def distroCode = dist[1]
+        def dist = distribution.split(':')
+        distroFamily = dist[0]
+        distroCodename = dist[1]
+
+
         def buildImage = ''
-        def artifacts = []
-        def buildVer = ''
 
-        node {
+        node( architecture ) {
             ansiColor('xterm') {
-                stage('Checkout ' + distroName) {
+                stage('Build ' + architecture + '/' + distribution) {
                     checkout scm
-                    def imageName = vendor + '/' + imagePrefix + distroCode + ':latest'
-                    buildImage = docker.image(imageName)
-                    sh 'git checkout debian/changelog'
-                    def version = sh (
-                        script: 'dpkg-parsechangelog --show-field Version',
-                        returnStdout: true
-                    ).trim()
-                    buildVer = version + '.' + env.BUILD_NUMBER  + '~' + distroCode
+                    buildImage = docker.build(vendor + '/' + 'multiflexi-' + distroFamily + ':' + distroCodename, buildArgs)
                 }
-                stage('Build ' + distroName) {
+                stage('Test ' + architecture + '/' + distribution) {
                     buildImage.inside {
-                        sh 'dch -b -v ' + buildVer  + ' "' + env.BUILD_TAG  + '"'
-                        sh 'sudo apt-get update --allow-releaseinfo-change'
-                        sh 'sudo chown jenkins:jenkins ..'
-                        sh 'debuild-pbuilder  -i -us -uc -b'
-                        sh 'mkdir -p $WORKSPACE/dist/debian/ ; rm -rf $WORKSPACE/dist/debian/* ; for deb in $(cat debian/files | awk \'{print $1}\'); do mv "../$deb" $WORKSPACE/dist/debian/; done'
-                        artifacts = sh (
-                            script: "cat debian/files | awk '{print \$1}'",
-                            returnStdout: true
-                        ).trim().split('\n')
+                        sh 'whoami'
+                        sh 'sudo apt install -y linuxlogo'
+                        sh 'linuxlogo'
                     }
                 }
-
-                stage('Test ' + distroName) {
-                    buildImage.inside {
-                        def debconf_debug = 0 //Set to "5" or "developer" to debug debconf
-                        sh 'cd $WORKSPACE/dist/debian/ ; dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz; cd $WORKSPACE'
-                        sh 'echo "deb [trusted=yes] file://///$WORKSPACE/dist/debian/ ./" | sudo tee /etc/apt/sources.list.d/local.list'
-                        sh 'sudo apt-get update --allow-releaseinfo-change'
-                        sh 'echo "INSTALATION"'
-                        artifacts.each { deb_file ->
-                            if (deb_file.endsWith('.deb')) {
-                                sh 'echo -e "${GREEN} installing ' + deb_file + ' on `lsb_release -sc` ${ENDCOLOR} "'
-                                sh 'sudo DEBIAN_FRONTEND=noninteractive DEBCONF_DEBUG=' + debconf_debug + ' apt-get -y install $WORKSPACE/dist/debian/' + deb_file
-                            }
-                        }
-                    }
-                }
-                stage('Archive artifacts ' + distroName ) {
-                    // Only run if previous stages (Build and Test) succeeded
-                    buildImage.inside {
-                        // Archive all produced artifacts listed in debian/files
-                        artifacts.each { deb_file ->
-                            println "Archiving artifact: " + deb_file
-                            archiveArtifacts artifacts: 'dist/debian/' + deb_file
-                        }
-                        // Cleanup: remove any produced files named in debian/files
-                        // Try both the dist location and any potential original locations referenced by debian/files
-                        sh '''
-                            set -e
-                            if [ -f debian/files ]; then
-                              while read -r file _; do
-                                [ -n "$file" ] || continue
-                                rm -f "dist/debian/$file" || true
-                                rm -f "../$file" || true
-                                rm -f "$WORKSPACE/$file" || true
-                              done < debian/files
-                            fi
-                        '''
+                stage('Docker push ' + architecture + '/' + distroCodename + "-${env.BUILD_NUMBER}-SNAPSHOT" ) {
+                    docker.withRegistry('https://registry.hub.docker.com', 'vitex_dockerhub') {
+			if(env.PUSH == 'true'){
+                    	    buildImage.push(  distroCodename + "-${env.BUILD_NUMBER}-SNAPSHOT")
+			}
                     }
                 }
             }
         }
     }
-}
-parallel branches
-
-if (!currentBuild.result || currentBuild.result == 'SUCCESS') {
-    build job: 'MultiFlexi-publish',
-      wait: false,
-      parameters: [
-        string(name: 'UPSTREAM_JOB', value: env.JOB_NAME),
-        string(name: 'UPSTREAM_BUILD', value: env.BUILD_NUMBER),
-        string(name: 'REMOTE_SSH', value: 'multirepo@repo.multiflexi.eu'),
-        string(name: 'REMOTE_REPO_DIR', value: '/srv/repo'),
-        string(name: 'COMPONENT', value: 'main'),
-        string(name: 'DEB_DIST', value: '')
-      ]
 }

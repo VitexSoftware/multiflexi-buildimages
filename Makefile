@@ -14,7 +14,7 @@ ALL_VARIANTS := $(DEBIAN_VARIANTS) $(UBUNTU_VARIANTS)
 
 # Image tags
 define IMAGE_TAG
-$(NAMESPACE)/multiflexi-$(1):latest
+$(NAMESPACE)/$(if $(findstring $(1),$(DEBIAN_VARIANTS)),multiflexi-debian,multiflexi-ubuntu):$(1)
 endef
 
 .PHONY: all
@@ -53,31 +53,32 @@ buildx-%: %
 	  --build-arg REPO_URL=$(REPO_URL) \
 	  --build-arg KEY_URL=$(KEY_URL) \
 	  -t $(call IMAGE_TAG,$*) \
-	  --load \
+	  --push \
 	  .
 
 # Push and publish
 .PHONY: push publish
 push:
-	for v in $(ALL_VARIANTS); do docker push $(NAMESPACE)/multiflexi-$$v:latest; done
+	for v in $(DEBIAN_VARIANTS); do docker push $(NAMESPACE)/multiflexi-debian:$$v; done
+	for v in $(UBUNTU_VARIANTS); do docker push $(NAMESPACE)/multiflexi-ubuntu:$$v; done
 
 publish:
 	for v in $(DEBIAN_VARIANTS); do docker buildx build \
-	  --platform $(PLATFORMS) \
-	  -f debian/$$v/Dockerfile \
-	  --build-arg REPO_URL=$(REPO_URL) \
-	  --build-arg KEY_URL=$(KEY_URL) \
-	  -t $(NAMESPACE)/multiflexi-$$v:latest \
-	  --push \
-	  .; done
+		--platform $(PLATFORMS) \
+		-f debian/$$v/Dockerfile \
+		--build-arg REPO_URL=$(REPO_URL) \
+		--build-arg KEY_URL=$(KEY_URL) \
+		-t $(NAMESPACE)/multiflexi-debian:$$v \
+		--push \
+		.; done
 	for v in $(UBUNTU_VARIANTS); do docker buildx build \
-	  --platform $(PLATFORMS) \
-	  -f ubuntu/$$v/Dockerfile \
-	  --build-arg REPO_URL=$(REPO_URL) \
-	  --build-arg KEY_URL=$(KEY_URL) \
-	  -t $(NAMESPACE)/multiflexi-$$v:latest \
-	  --push \
-	  .; done
+		--platform $(PLATFORMS) \
+		-f ubuntu/$$v/Dockerfile \
+		--build-arg REPO_URL=$(REPO_URL) \
+		--build-arg KEY_URL=$(KEY_URL) \
+		-t $(NAMESPACE)/multiflexi-ubuntu:$$v \
+		--push \
+		.; done
 
 # Lint Dockerfiles with hadolint
 .PHONY: lint
@@ -88,7 +89,8 @@ lint:
 # Clean
 .PHONY: clean reset
 clean:
-	-@for v in $(ALL_VARIANTS); do docker rmi -f $(NAMESPACE)/multiflexi-$$v:latest 2> /dev/null || true; done
+	-@for v in $(DEBIAN_VARIANTS); do docker rmi -f $(NAMESPACE)/multiflexi-debian:$$v 2> /dev/null || true; done
+	-@for v in $(UBUNTU_VARIANTS); do docker rmi -f $(NAMESPACE)/multiflexi-ubuntu:$$v 2> /dev/null || true; done
 	-@docker image prune -f 2> /dev/null || true
 
 reset: clean all
