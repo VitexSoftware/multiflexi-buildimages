@@ -63,7 +63,7 @@ jobs:
             KEY_URL=${{ env.KEY_URL }}
           tags: ${{ env.IMAGE_NAME }}:preflight
 
-      - name: Preflight test: php-vitexsoftware-ease-core-dev
+      - name: "Preflight test: php-vitexsoftware-ease-core-dev"
         run: |
           docker run --rm "${{ env.IMAGE_NAME }}:preflight" bash -lc "apt-get update && apt-get install -y php-vitexsoftware-ease-core-dev && phpunit --bootstrap /usr/share/php/EaseCore/Test/Bootstrap.php --configuration /usr/share/php/EaseCore/Test/phpunit.xml"
 
