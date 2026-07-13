@@ -47,6 +47,7 @@ architectures.each {
                     docker.withRegistry('https://registry.hub.docker.com', 'vitex_dockerhub') {
 			if(env.PUSH == 'true'){
                     	    buildImage.push(  distroCodename + "-${env.BUILD_NUMBER}-SNAPSHOT")
+			    buildImage.push(  distroCodename )
 			}
                     }
                 }
